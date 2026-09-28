@@ -1,3 +1,32 @@
+java_home: "/usr/lib/jvm/java-11-openjdk-amd64"
+
+# Vagrant reads these values and generates inventory/hosts.yml.
+vagrant_box: "ubuntu/jammy64"
+vagrant_box_version:
+vagrant_vm_name_prefix: "hadoop-ha"
+vagrant_vm_memory_mb: 2048
+vagrant_vm_cpus: 2
+hadoop_host_addresses:
+  nn1: "10.0.0.111"
+  nn2: "10.0.0.112"
+  dn1: "10.0.0.113"
+  dn2: "10.0.0.114"
+  client: "10.0.0.115"
+vagrant_vm_specs:
+  - name: "nn1"
+    groups: ["namenodes", "journalnodes", "zookeepers"]
+    zk_id: 1
+  - name: "nn2"
+    groups: ["namenodes", "zookeepers"]
+    zk_id: 2
+  - name: "dn1"
+    groups: ["datanodes", "journalnodes", "zookeepers"]
+    zk_id: 3
+  - name: "dn2"
+    groups: ["datanodes", "journalnodes"]
+  - name: "client"
+    groups: ["clients"]
+
 ansible_user: root
 
 hadoop_version: "3.3.6"

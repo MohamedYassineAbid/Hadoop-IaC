@@ -2,29 +2,54 @@
 - name: Configure /etc/hosts
   lineinfile:
     path: /etc/hosts
-    line: "{{ item }}"
-    state: present
-  loop:
-    - "192.168.174.111 nn1"
-    - "192.168.174.112 nn2"
-    - "192.168.174.113 dn1"
-    - "192.168.174.114 dn2"
-    - "192.168.174.115 client"
-    - "192.168.174.116 rocky10"
+    regexp: '^\s*127\.0\.2\.1\s+.*\b{{ item.key }}\b'
+    state: absent
+  loop: "{{ hadoop_host_addresses | dict2items }}"
 
-- name: Disable the firewall
+- name: Configure /etc/hosts
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ item.value }} {{ item.key }}"
+    regexp: '^\s*[0-9a-fA-F:.]+\s+{{ item.key }}(\s|$)'
+    state: present
+  loop: "{{ hadoop_host_addresses | dict2items }}"
+
+- name: Disable firewalld on Red Hat systems
   systemd:
     name: firewalld
     state: stopped
     enabled: no
+  when: ansible_facts.os_family == 'RedHat'
 
-- name: Disable SELinux
+- name: Disable UFW on Debian systems
+  systemd:
+    name: ufw
+    state: stopped
+    enabled: no
+  when: ansible_facts.os_family == 'Debian'
+
+- name: Disable SELinux on Red Hat systems
   lineinfile:
     path: /etc/selinux/config
     regexp: '^SELINUX='
     line: 'SELINUX=disabled'
+  when: ansible_facts.os_family == 'RedHat'
 
-- name: Verify that the JDK is installed
+- name: Install Java 11 on Debian systems
+  apt:
+    name: openjdk-11-jdk
+    state: present
+    update_cache: yes
+    cache_valid_time: 3600
+  when: ansible_facts.os_family == 'Debian'
+
+- name: Install Java 11 on Red Hat systems
+  package:
+    name: java-11-openjdk-devel
+    state: present
+  when: ansible_facts.os_family == 'RedHat'
+
+- name: Verify that Java is installed
   command: java -version
   register: java_check
   changed_when: false

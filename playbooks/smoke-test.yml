@@ -19,12 +19,12 @@
     - name: Create the HDFS directory
       command: "sudo -u {{ test_user }} /opt/hadoop/bin/hdfs dfs -mkdir -p /test/input"
       environment:
-        PATH: "/opt/hadoop/bin:{{ ansible_env.PATH }}"
+        PATH: "/opt/hadoop/bin:{{ ansible_facts.env.PATH }}"
 
     - name: Upload the file
-      command: "sudo -u {{ test_user }} /opt/hadoop/bin/hdfs dfs -put /tmp/ha_test/test.txt /test/input/"
+      command: "sudo -u {{ test_user }} /opt/hadoop/bin/hdfs dfs -put -f /tmp/ha_test/test.txt /test/input/"
       environment:
-        PATH: "/opt/hadoop/bin:{{ ansible_env.PATH }}"
+        PATH: "/opt/hadoop/bin:{{ ansible_facts.env.PATH }}"
 
     - name: Check the nn1 state
       shell: "sudo -u {{ test_user }} /opt/hadoop/bin/hdfs haadmin -getServiceState nn1"
@@ -35,7 +35,7 @@
       command: "sudo -u {{ test_user }} /opt/hadoop/bin/hdfs haadmin -failover nn1 nn2"
       when: nn1_state.stdout == "active"
       environment:
-        PATH: "/opt/hadoop/bin:{{ ansible_env.PATH }}"
+        PATH: "/opt/hadoop/bin:{{ ansible_facts.env.PATH }}"
 
     - name: Confirm that nn2 becomes active
       shell: "sudo -u {{ test_user }} /opt/hadoop/bin/hdfs haadmin -getServiceState nn2"
@@ -49,7 +49,7 @@
       command: "sudo -u {{ test_user }} /opt/hadoop/bin/hdfs dfs -cat /test/input/test.txt"
       register: file_content
       environment:
-        PATH: "/opt/hadoop/bin:{{ ansible_env.PATH }}"
+        PATH: "/opt/hadoop/bin:{{ ansible_facts.env.PATH }}"
 
     - name: Display the test result
       debug:

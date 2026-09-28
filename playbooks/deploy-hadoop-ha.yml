@@ -54,41 +54,41 @@
     - name: Start JournalNode
       systemd:
         name: hadoop-journalnode
-        state: started
+        state: restarted
         enabled: yes
       when: inventory_hostname in groups['journalnodes']
 
     - name: Start NameNode
       systemd:
         name: hadoop-namenode
-        state: started
+        state: restarted
         enabled: yes
       when: inventory_hostname in groups['namenodes']
 
     - name: Start DataNode
       systemd:
         name: hadoop-datanode
-        state: started
+        state: restarted
         enabled: yes
       when: inventory_hostname in groups['datanodes']
 
     - name: Start ZKFC
       systemd:
         name: hadoop-zkfc
-        state: started
+        state: restarted
         enabled: yes
       when: inventory_hostname in groups['namenodes']
 
     - name: Start ResourceManager
       systemd:
         name: hadoop-resourcemanager
-        state: started
+        state: restarted
         enabled: yes
       when: inventory_hostname in groups['namenodes']
 
     - name: Start NodeManager
       systemd:
         name: hadoop-nodemanager
-        state: started
+        state: restarted
         enabled: yes
       when: inventory_hostname in groups['datanodes']
