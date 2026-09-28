@@ -1,0 +1,19 @@
+[Unit]
+Description=Apache HiveServer2
+After=network.target hive-metastore.service
+Requires=hive-metastore.service
+
+[Service]
+Type=simple
+User=hadoop
+Group=hadoop
+Environment=HADOOP_HOME={{ hadoop_home }}
+Environment=JAVA_HOME={{ hive_java_home }}
+Environment=HIVE_HOME={{ hive_home }}
+Environment=HIVE_CONF_DIR={{ hive_home }}/conf
+Environment=PATH={{ hive_home }}/bin:{{ hadoop_home }}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
+ExecStart={{ hive_home }}/bin/hiveserver2 --hiveconf hive.server2.transport.mode=binary --hiveconf hive.server2.thrift.bind.host=0.0.0.0 --hiveconf hive.server2.thrift.port={{ hive_server2_port }}
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

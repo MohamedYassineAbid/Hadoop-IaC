@@ -46,3 +46,9 @@
         state: restarted
         enabled: yes
       when: inventory_hostname in groups['datanodes']
+
+- name: Install and configure Hive when enabled
+  hosts: namenodes
+  roles:
+    - role: hive
+      when: hive_enabled | bool

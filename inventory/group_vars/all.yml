@@ -25,3 +25,19 @@ yarn_resourcemanager_scheduler_address: "nn1:8030"
 yarn_resourcemanager_resource_tracker_address: "nn1:8031"
 yarn_resourcemanager_admin_address: "nn1:8033"
 yarn_resourcemanager_webapp_address: "nn1:8088"
+
+# Optional Hive installation. Set to true to install Hive and its metastore.
+hive_enabled: true
+hive_version: "3.1.3"
+hive_home: "/usr/local/hive"
+hive_java_home: "/usr/lib/jvm/java-8-openjdk-amd64"
+hive_archive: "apache-hive-{{ hive_version }}-bin.tar.gz"
+hive_mysql_connector_version: "8.0.28"
+hive_mysql_connector_url: "https://repo1.maven.org/maven2/mysql/mysql-connector-java/{{ hive_mysql_connector_version }}/mysql-connector-java-{{ hive_mysql_connector_version }}.jar"
+hive_metastore_host: "nn1"
+hive_metastore_port: 9083
+hive_server2_port: 10000
+hive_metastore_db: "hive_metastore"
+hive_metastore_user: "hive"
+hive_metastore_password: "hivepassword"
+hive_execution_engine: "mr"

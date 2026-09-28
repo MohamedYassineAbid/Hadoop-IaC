@@ -1,2 +1,3 @@
 *.tar.gz
 roles/hadoop/files/*.tar.gz
+roles/hive/files/*.tar.gz

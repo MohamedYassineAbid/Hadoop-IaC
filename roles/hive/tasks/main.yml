@@ -1,0 +1,128 @@
+---
+- name: Install Hive and metastore dependencies on Debian systems
+  apt:
+    name:
+      - mysql-server
+      - mysql-client
+      - openjdk-8-jre-headless
+    state: present
+    update_cache: yes
+    cache_valid_time: 3600
+  when: ansible_facts.os_family == 'Debian'
+
+- name: Start and enable MySQL
+  systemd:
+    name: mysql
+    state: started
+    enabled: yes
+
+- name: Extract the Hive archive
+  unarchive:
+    src: "{{ hive_archive }}"
+    dest: /usr/local
+    creates: "/usr/local/apache-hive-{{ hive_version }}-bin"
+    owner: hadoop
+    group: hadoop
+
+- name: Create the Hive symbolic link
+  file:
+    src: "/usr/local/apache-hive-{{ hive_version }}-bin"
+    dest: "{{ hive_home }}"
+    state: link
+    owner: hadoop
+    group: hadoop
+
+- name: Download the MySQL JDBC driver
+  get_url:
+    url: "{{ hive_mysql_connector_url }}"
+    dest: "{{ hive_home }}/lib/mysql-connector-j-{{ hive_mysql_connector_version }}.jar"
+    owner: hadoop
+    group: hadoop
+    mode: '0644'
+
+- name: Create the Hive environment file
+  template:
+    src: hive-env.sh.j2
+    dest: "{{ hive_home }}/conf/hive-env.sh"
+    owner: hadoop
+    group: hadoop
+    mode: '0755'
+
+- name: Configure Hive metastore
+  template:
+    src: hive-site.xml.j2
+    dest: "{{ hive_home }}/conf/hive-site.xml"
+    owner: hadoop
+    group: hadoop
+    mode: '0644'
+
+- name: Create the Hive metastore database and user
+  shell: |
+    mysql --protocol=socket -uroot <<'SQL'
+    CREATE DATABASE IF NOT EXISTS `{{ hive_metastore_db }}`;
+    CREATE USER IF NOT EXISTS '{{ hive_metastore_user }}'@'localhost' IDENTIFIED BY '{{ hive_metastore_password }}';
+    ALTER USER '{{ hive_metastore_user }}'@'localhost' IDENTIFIED BY '{{ hive_metastore_password }}';
+    GRANT ALL PRIVILEGES ON `{{ hive_metastore_db }}`.* TO '{{ hive_metastore_user }}'@'localhost';
+    FLUSH PRIVILEGES;
+    SQL
+  changed_when: false
+  no_log: true
+
+- name: Create Hive warehouse and temporary HDFS directories
+  command: "{{ hadoop_home }}/bin/hdfs dfs -mkdir -p /user/hive/warehouse /tmp"
+  become: true
+  become_user: hadoop
+  environment:
+    PATH: "{{ hadoop_home }}/bin:{{ ansible_facts.env.PATH }}"
+
+- name: Set Hive HDFS directory permissions
+  command: "{{ hadoop_home }}/bin/hdfs dfs -chmod -R 777 /user/hive/warehouse /tmp"
+  become: true
+  become_user: hadoop
+  environment:
+    PATH: "{{ hadoop_home }}/bin:{{ ansible_facts.env.PATH }}"
+
+- name: Initialize the Hive metastore schema
+  command: "{{ hive_home }}/bin/schematool -dbType mysql -initSchema"
+  args:
+    creates: "{{ hive_home }}/.metastore-schema-initialized"
+  become: true
+  become_user: hadoop
+  environment:
+    HADOOP_HOME: "{{ hadoop_home }}"
+    HIVE_HOME: "{{ hive_home }}"
+    HIVE_CONF_DIR: "{{ hive_home }}/conf"
+    PATH: "{{ hive_home }}/bin:{{ hadoop_home }}/bin:{{ ansible_facts.env.PATH }}"
+
+- name: Mark the Hive metastore schema as initialized
+  file:
+    path: "{{ hive_home }}/.metastore-schema-initialized"
+    state: touch
+    owner: hadoop
+    group: hadoop
+    mode: '0644'
+
+- name: Install Hive systemd services
+  template:
+    src: "{{ item.src }}"
+    dest: "/etc/systemd/system/{{ item.dest }}"
+    mode: '0644'
+  loop:
+    - { src: 'hive-metastore.service.j2', dest: 'hive-metastore.service' }
+    - { src: 'hive-server2.service.j2', dest: 'hive-server2.service' }
+
+- name: Reload systemd after installing Hive services
+  systemd:
+    daemon_reload: yes
+
+- name: Start and enable Hive Metastore
+  systemd:
+    name: hive-metastore
+    state: started
+    enabled: yes
+
+- name: Start and enable HiveServer2
+  systemd:
+    name: hive-server2
+    state: started
+    enabled: yes

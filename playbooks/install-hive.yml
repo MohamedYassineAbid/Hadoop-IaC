@@ -1,0 +1,7 @@
+---
+- name: Install and configure optional Hive
+  hosts: namenodes
+  roles:
+    - role: common
+    - role: hive
+      when: hive_enabled | bool
