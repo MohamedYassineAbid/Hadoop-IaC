@@ -1,0 +1,69 @@
+---
+- name: Create the hadoop user
+  user:
+    name: hadoop
+    group: hadoop
+    create_home: yes
+    shell: /bin/bash
+
+- name: Extract the Hadoop package
+  unarchive:
+    src: "hadoop-{{ hadoop_version }}.tar.gz"
+    dest: /opt
+    owner: hadoop
+    group: hadoop
+
+- name: Create the Hadoop symbolic link
+  file:
+    src: "/opt/hadoop-{{ hadoop_version }}"
+    dest: "{{ hadoop_home }}"
+    state: link
+    owner: hadoop
+    group: hadoop
+
+- name: Create data directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: hadoop
+    group: hadoop
+  loop:
+    - "{{ dfs_namenode_name_dir }}"
+    - "{{ dfs_datanode_data_dir }}"
+    - "{{ dfs_journalnode_edits_dir }}"
+
+- name: Generate hadoop-env.sh
+  template:
+    src: hadoop-env.sh.j2
+    dest: "{{ hadoop_conf_dir }}/hadoop-env.sh"
+    owner: hadoop
+    group: hadoop
+
+- name: Generate core configuration files
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ hadoop_conf_dir }}/{{ item.dest }}"
+    owner: hadoop
+    group: hadoop
+  loop:
+    - { src: 'core-site.xml.j2', dest: 'core-site.xml' }
+    - { src: 'hdfs-site.xml.j2', dest: 'hdfs-site.xml' }
+    - { src: 'yarn-site.xml.j2', dest: 'yarn-site.xml' }
+    - { src: 'mapred-site.xml.j2', dest: 'mapred-site.xml' }
+    - { src: 'workers.j2', dest: 'workers' }
+
+- name: Install systemd service files
+  template:
+    src: "{{ item.src }}"
+    dest: "/etc/systemd/system/{{ item.dest }}"
+  loop:
+    - { src: 'hadoop-journalnode.service.j2', dest: 'hadoop-journalnode.service' }
+    - { src: 'hadoop-namenode.service.j2', dest: 'hadoop-namenode.service' }
+    - { src: 'hadoop-datanode.service.j2', dest: 'hadoop-datanode.service' }
+    - { src: 'hadoop-zkfc.service.j2', dest: 'hadoop-zkfc.service' }
+    - { src: 'hadoop-resourcemanager.service.j2', dest: 'hadoop-resourcemanager.service' }
+    - { src: 'hadoop-nodemanager.service.j2', dest: 'hadoop-nodemanager.service' }
+
+- name: Reload systemd configuration
+  systemd:
+    daemon_reload: yes

@@ -1,0 +1,14 @@
+[Unit]
+Description=Hadoop JournalNode
+After=network.target
+
+[Service]
+Type=forking
+User=hadoop
+Group=hadoop
+ExecStart={{ hadoop_home }}/bin/hdfs --daemon start journalnode
+ExecStop={{ hadoop_home }}/bin/hdfs --daemon stop journalnode
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

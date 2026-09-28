@@ -1,0 +1,30 @@
+---
+- name: Configure /etc/hosts
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ item }}"
+    state: present
+  loop:
+    - "192.168.174.111 nn1"
+    - "192.168.174.112 nn2"
+    - "192.168.174.113 dn1"
+    - "192.168.174.114 dn2"
+    - "192.168.174.115 client"
+    - "192.168.174.116 rocky10"
+
+- name: Disable the firewall
+  systemd:
+    name: firewalld
+    state: stopped
+    enabled: no
+
+- name: Disable SELinux
+  lineinfile:
+    path: /etc/selinux/config
+    regexp: '^SELINUX='
+    line: 'SELINUX=disabled'
+
+- name: Verify that the JDK is installed
+  command: java -version
+  register: java_check
+  changed_when: false

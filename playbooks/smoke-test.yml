@@ -1,0 +1,56 @@
+---
+- name: Verify HA functionality
+  hosts: client
+  vars:
+    test_user: hadoop
+  tasks:
+    - name: Create the test directory
+      file:
+        path: /tmp/ha_test
+        state: directory
+        owner: "{{ test_user }}"
+
+    - name: Generate the test file
+      copy:
+        content: "HA test"
+        dest: /tmp/ha_test/test.txt
+        owner: "{{ test_user }}"
+
+    - name: Create the HDFS directory
+      command: "sudo -u {{ test_user }} /opt/hadoop/bin/hdfs dfs -mkdir -p /test/input"
+      environment:
+        PATH: "/opt/hadoop/bin:{{ ansible_env.PATH }}"
+
+    - name: Upload the file
+      command: "sudo -u {{ test_user }} /opt/hadoop/bin/hdfs dfs -put /tmp/ha_test/test.txt /test/input/"
+      environment:
+        PATH: "/opt/hadoop/bin:{{ ansible_env.PATH }}"
+
+    - name: Check the nn1 state
+      shell: "sudo -u {{ test_user }} /opt/hadoop/bin/hdfs haadmin -getServiceState nn1"
+      register: nn1_state
+      changed_when: false
+
+    - name: Fail over if nn1 is active
+      command: "sudo -u {{ test_user }} /opt/hadoop/bin/hdfs haadmin -failover nn1 nn2"
+      when: nn1_state.stdout == "active"
+      environment:
+        PATH: "/opt/hadoop/bin:{{ ansible_env.PATH }}"
+
+    - name: Confirm that nn2 becomes active
+      shell: "sudo -u {{ test_user }} /opt/hadoop/bin/hdfs haadmin -getServiceState nn2"
+      register: nn2_state
+      until: nn2_state.stdout == "active"
+      retries: 10
+      delay: 3
+      changed_when: false
+
+    - name: Verify that the file is still accessible
+      command: "sudo -u {{ test_user }} /opt/hadoop/bin/hdfs dfs -cat /test/input/test.txt"
+      register: file_content
+      environment:
+        PATH: "/opt/hadoop/bin:{{ ansible_env.PATH }}"
+
+    - name: Display the test result
+      debug:
+        msg: "File content: {{ file_content.stdout }}"

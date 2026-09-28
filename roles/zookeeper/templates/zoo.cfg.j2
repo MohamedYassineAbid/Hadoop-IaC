@@ -1,0 +1,8 @@
+tickTime=2000
+initLimit=10
+syncLimit=5
+dataDir={{ zk_data_dir }}
+clientPort=2181
+{% for host in groups['zookeepers'] %}
+server.{{ hostvars[host].zk_id }}={{ hostvars[host].ansible_host }}:2888:3888
+{% endfor %}

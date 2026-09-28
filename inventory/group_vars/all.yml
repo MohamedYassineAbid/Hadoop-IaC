@@ -1,0 +1,43 @@
+ansible_user: root
+
+hadoop_version: "3.3.6"
+hadoop_home: "/opt/hadoop"
+hadoop_conf_dir: "{{ hadoop_home }}/etc/hadoop"
+
+zk_version: "3.8.4"
+zk_home: "/opt/zookeeper"
+zk_data_dir: "/var/lib/zookeeper"
+zk_conf_dir: "{{ zk_home }}/conf"
+
+fs_default: "hdfs://mycluster"
+nameservice_id: "mycluster"
+dfs_ha_namenodes: ["nn1","nn2"]
+dfs_namenode_rpc_address:
+  nn1: "nn1:8020"
+  nn2: "nn2:8020"
+dfs_namenode_http_address:
+  nn1: "nn1:9870"
+  nn2: "nn2:9870"
+dfs_journalnode_edits_dir: "/opt/hadoop/data/jn"
+dfs_replication: 2
+dfs_namenode_name_dir: "/opt/hadoop/data/namenode"
+dfs_datanode_data_dir: "/opt/hadoop/data/datanode"
+
+yarn_resourcemanager_hostname:
+  nn1: "nn1"
+  nn2: "nn2"
+yarn_resourcemanager_address:
+  nn1: "nn1:8032"
+  nn2: "nn2:8032"
+yarn_resourcemanager_scheduler_address:
+  nn1: "nn1:8030"
+  nn2: "nn2:8030"
+yarn_resourcemanager_resource_tracker_address:
+  nn1: "nn1:8031"
+  nn2: "nn2:8031"
+yarn_resourcemanager_admin_address:
+  nn1: "nn1:8033"
+  nn2: "nn2:8033"
+yarn_resourcemanager_webapp_address:
+  nn1: "nn1:8088"
+  nn2: "nn2:8088"

@@ -1,0 +1,14 @@
+[Unit]
+Description=Hadoop NodeManager
+After=network.target
+
+[Service]
+Type=forking
+User=hadoop
+Group=hadoop
+ExecStart={{ hadoop_home }}/bin/yarn --daemon start nodemanager
+ExecStop={{ hadoop_home }}/bin/yarn --daemon stop nodemanager
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

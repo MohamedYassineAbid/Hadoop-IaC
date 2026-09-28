@@ -1,0 +1,14 @@
+[Unit]
+Description=Hadoop NameNode
+After=network.target
+
+[Service]
+Type=forking
+User=hadoop
+Group=hadoop
+ExecStart={{ hadoop_home }}/bin/hdfs --daemon start namenode
+ExecStop={{ hadoop_home }}/bin/hdfs --daemon stop namenode
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

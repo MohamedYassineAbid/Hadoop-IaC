@@ -1,0 +1,94 @@
+---
+- name: Validate base environment
+  hosts: hadoop_ha,clients
+  roles:
+    - common
+
+- name: Deploy ZooKeeper cluster
+  hosts: zookeepers
+  roles:
+    - zookeeper
+
+- name: Distribute Hadoop and generate configuration
+  hosts: hadoop_ha
+  roles:
+    - hadoop
+
+- name: Configure passwordless SSH for the hadoop user
+  hosts: nn1
+  tasks:
+    - name: Generate an SSH key for the hadoop user
+      user:
+        name: hadoop
+        generate_ssh_key: yes
+        ssh_key_bits: 2048
+        ssh_key_file: .ssh/id_rsa
+
+    - name: Retrieve the public key
+      slurp:
+        src: /home/hadoop/.ssh/id_rsa.pub
+      register: hadoop_pubkey
+
+    - name: Distribute the public key to nn1 and nn2
+      authorized_key:
+        user: hadoop
+        state: present
+        key: "{{ hadoop_pubkey.content | b64decode }}"
+      delegate_to: "{{ item }}"
+      loop:
+        - nn1
+        - nn2
+
+- name: Initialize HA
+  hosts: namenodes:journalnodes
+  tasks:
+    - import_tasks: ../roles/hadoop/tasks/initialize.yml
+      when: inventory_hostname in groups['namenodes'] or inventory_hostname in groups['journalnodes']
+  vars:
+    format_zk: true
+    format_nn: true
+
+- name: Start HDFS and YARN services
+  hosts: hadoop_ha
+  tasks:
+    - name: Start JournalNode
+      systemd:
+        name: hadoop-journalnode
+        state: started
+        enabled: yes
+      when: inventory_hostname in groups['journalnodes']
+
+    - name: Start NameNode
+      systemd:
+        name: hadoop-namenode
+        state: started
+        enabled: yes
+      when: inventory_hostname in groups['namenodes']
+
+    - name: Start DataNode
+      systemd:
+        name: hadoop-datanode
+        state: started
+        enabled: yes
+      when: inventory_hostname in groups['datanodes']
+
+    - name: Start ZKFC
+      systemd:
+        name: hadoop-zkfc
+        state: started
+        enabled: yes
+      when: inventory_hostname in groups['namenodes']
+
+    - name: Start ResourceManager
+      systemd:
+        name: hadoop-resourcemanager
+        state: started
+        enabled: yes
+      when: inventory_hostname in groups['namenodes']
+
+    - name: Start NodeManager
+      systemd:
+        name: hadoop-nodemanager
+        state: started
+        enabled: yes
+      when: inventory_hostname in groups['datanodes']

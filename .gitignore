@@ -1,0 +1,2 @@
+*.tar.gz
+roles/hadoop/files/*.tar.gz

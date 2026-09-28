@@ -1,0 +1,14 @@
+[Unit]
+Description=Hadoop ZKFC
+After=network.target
+
+[Service]
+Type=forking
+User=hadoop
+Group=hadoop
+ExecStart={{ hadoop_home }}/bin/hdfs --daemon start zkfc
+ExecStop={{ hadoop_home }}/bin/hdfs --daemon stop zkfc
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
