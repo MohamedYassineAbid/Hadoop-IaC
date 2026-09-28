@@ -1,46 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
     <property>
-        <name>yarn.resourcemanager.ha.enabled</name>
-        <value>true</value>
-    </property>
-    <property>
         <name>yarn.resourcemanager.cluster-id</name>
         <value>yarn-cluster</value>
     </property>
     <property>
-        <name>yarn.resourcemanager.ha.rm-ids</name>
-        <value>{% for nn in dfs_ha_namenodes %}{{ nn }}{% if not loop.last %},{% endif %}{% endfor %}</value>
-    </property>
-    {% for nn in dfs_ha_namenodes %}
-    <property>
-        <name>yarn.resourcemanager.hostname.{{ nn }}</name>
-        <value>{{ yarn_resourcemanager_hostname[nn] }}</value>
+        <name>yarn.resourcemanager.hostname</name>
+        <value>{{ yarn_resourcemanager_hostname }}</value>
     </property>
     <property>
-        <name>yarn.resourcemanager.address.{{ nn }}</name>
-        <value>{{ yarn_resourcemanager_address[nn] }}</value>
+        <name>yarn.resourcemanager.address</name>
+        <value>{{ yarn_resourcemanager_address }}</value>
     </property>
     <property>
-        <name>yarn.resourcemanager.scheduler.address.{{ nn }}</name>
-        <value>{{ yarn_resourcemanager_scheduler_address[nn] }}</value>
+        <name>yarn.resourcemanager.scheduler.address</name>
+        <value>{{ yarn_resourcemanager_scheduler_address }}</value>
     </property>
     <property>
-        <name>yarn.resourcemanager.resource-tracker.address.{{ nn }}</name>
-        <value>{{ yarn_resourcemanager_resource_tracker_address[nn] }}</value>
+        <name>yarn.resourcemanager.resource-tracker.address</name>
+        <value>{{ yarn_resourcemanager_resource_tracker_address }}</value>
     </property>
     <property>
-        <name>yarn.resourcemanager.admin.address.{{ nn }}</name>
-        <value>{{ yarn_resourcemanager_admin_address[nn] }}</value>
+        <name>yarn.resourcemanager.admin.address</name>
+        <value>{{ yarn_resourcemanager_admin_address }}</value>
     </property>
     <property>
-        <name>yarn.resourcemanager.webapp.address.{{ nn }}</name>
-        <value>{{ yarn_resourcemanager_webapp_address[nn] }}</value>
-    </property>
-    {% endfor %}
-    <property>
-        <name>yarn.resourcemanager.zk-address</name>
-        <value>{% for host in groups['zookeepers'] %}{{ hostvars[host].ansible_host }}:2181{% if not loop.last %},{% endif %}{% endfor %}</value>
+        <name>yarn.resourcemanager.webapp.address</name>
+        <value>{{ yarn_resourcemanager_webapp_address }}</value>
     </property>
     <property>
         <name>yarn.nodemanager.aux-services</name>

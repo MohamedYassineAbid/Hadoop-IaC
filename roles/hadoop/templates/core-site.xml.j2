@@ -4,8 +4,4 @@
         <name>fs.defaultFS</name>
         <value>{{ fs_default }}</value>
     </property>
-    <property>
-        <name>ha.zookeeper.quorum</name>
-        <value>{% for host in groups['zookeepers'] %}{{ hostvars[host].ansible_host }}:2181{% if not loop.last %},{% endif %}{% endfor %}</value>
-    </property>
 </configuration>

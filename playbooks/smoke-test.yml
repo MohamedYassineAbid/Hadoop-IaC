@@ -1,6 +1,6 @@
 ---
-- name: Verify HA functionality
-  hosts: client
+- name: Verify standalone Hadoop functionality
+  hosts: namenodes
   vars:
     test_user: hadoop
   tasks:
@@ -26,26 +26,7 @@
       environment:
         PATH: "/opt/hadoop/bin:{{ ansible_env.PATH }}"
 
-    - name: Check the nn1 state
-      shell: "sudo -u {{ test_user }} /opt/hadoop/bin/hdfs haadmin -getServiceState nn1"
-      register: nn1_state
-      changed_when: false
-
-    - name: Fail over if nn1 is active
-      command: "sudo -u {{ test_user }} /opt/hadoop/bin/hdfs haadmin -failover nn1 nn2"
-      when: nn1_state.stdout == "active"
-      environment:
-        PATH: "/opt/hadoop/bin:{{ ansible_env.PATH }}"
-
-    - name: Confirm that nn2 becomes active
-      shell: "sudo -u {{ test_user }} /opt/hadoop/bin/hdfs haadmin -getServiceState nn2"
-      register: nn2_state
-      until: nn2_state.stdout == "active"
-      retries: 10
-      delay: 3
-      changed_when: false
-
-    - name: Verify that the file is still accessible
+    - name: Verify that the file is accessible
       command: "sudo -u {{ test_user }} /opt/hadoop/bin/hdfs dfs -cat /test/input/test.txt"
       register: file_content
       environment:

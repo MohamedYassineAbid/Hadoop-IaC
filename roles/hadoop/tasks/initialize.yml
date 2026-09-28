@@ -1,16 +1,4 @@
 ---
-- name: Start JournalNode
-  systemd:
-    name: hadoop-journalnode
-    state: started
-    enabled: yes
-  when: inventory_hostname in groups['journalnodes']
-
-- name: Format ZooKeeper
-  command: "sudo -u hadoop {{ hadoop_home }}/bin/hdfs zkfc -formatZK -force"
-  when: inventory_hostname == 'nn1' and format_zk | default(false)
-  run_once: true
-
 - name: Format NameNode
   command: "sudo -u hadoop {{ hadoop_home }}/bin/hdfs namenode -format -force"
   args:
@@ -18,19 +6,8 @@
   when: inventory_hostname == 'nn1' and format_nn | default(false)
   run_once: true
 
-- name: Start the nn1 NameNode
+- name: Start the NameNode
   systemd:
     name: hadoop-namenode
     state: started
   when: inventory_hostname == 'nn1' and format_nn | default(false)
-
-- name: Wait for the nn1 NameNode RPC port to become ready
-  wait_for:
-    port: 8020
-    host: nn1
-    timeout: 30
-  when: inventory_hostname == 'nn2' and format_nn | default(false)
-
-- name: Synchronize metadata to nn2
-  command: "sudo -u hadoop {{ hadoop_home }}/bin/hdfs namenode -bootstrapStandby -force"
-  when: inventory_hostname == 'nn2' and format_nn | default(false)

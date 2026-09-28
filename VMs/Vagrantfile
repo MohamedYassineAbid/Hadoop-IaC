@@ -1,0 +1,98 @@
+# Edit VM and network settings here. Vagrant writes the IP map into all.yml.
+VAGRANT_BOX = "ubuntu/jammy64"
+VAGRANT_BOX_VERSION = nil
+VM_NAME_PREFIX = "hadoop-standalone"
+VM_MEMORY_MB = 2048
+VM_CPUS = 2
+INVENTORY_FILE = File.expand_path("../inventory/hosts.yml", __dir__)
+ALL_VARS_FILE = File.expand_path("../inventory/group_vars/all.yml", __dir__)
+VAGRANT_SSH_PRIVATE_KEY = File.expand_path("~/.vagrant.d/insecure_private_key")
+
+VM_SPECS = [
+  { name: "nn1", role: "namenode", ip: "10.0.0.111" },
+  { name: "dn1", role: "datanode", ip: "10.0.0.113" },
+  { name: "dn2", role: "datanode", ip: "10.0.0.114" }
+]
+
+HOST_ADDRESSES = VM_SPECS.to_h { |spec| [spec[:name], spec[:ip]] }
+VAGRANT_BEGIN = "# BEGIN VAGRANT GENERATED HOST ADDRESSES"
+VAGRANT_END = "# END VAGRANT GENERATED HOST ADDRESSES"
+
+generated_addresses = [VAGRANT_BEGIN]
+generated_addresses << "hadoop_host_addresses:"
+HOST_ADDRESSES.each do |name, ip|
+  generated_addresses << "  #{name}: \"#{ip}\""
+end
+generated_addresses << VAGRANT_END
+generated_block = generated_addresses.join("\n")
+
+all_vars = File.exist?(ALL_VARS_FILE) ? File.read(ALL_VARS_FILE) : ""
+generated_pattern = /#{Regexp.escape(VAGRANT_BEGIN)}.*?#{Regexp.escape(VAGRANT_END)}/m
+if all_vars.match?(generated_pattern)
+  all_vars = all_vars.sub(generated_pattern, generated_block)
+else
+  all_vars = "#{generated_block}\n\n#{all_vars.lstrip}"
+end
+File.write(ALL_VARS_FILE, all_vars)
+
+def render_inventory_hosts(specs, role, indentation)
+  specs
+    .select { |spec| spec[:role] == role }
+    .map { |spec| "#{indentation}#{spec[:name]}:\n#{indentation}  ansible_host: #{spec[:ip]}" }
+    .join("\n")
+end
+
+namenode_hosts = render_inventory_hosts(VM_SPECS, "namenode", "            ")
+datanode_hosts = render_inventory_hosts(VM_SPECS, "datanode", "            ")
+File.write(INVENTORY_FILE, <<~YAML)
+  all:
+    children:
+      hadoop_cluster:
+        children:
+          namenodes:
+            hosts:
+  #{namenode_hosts}
+          datanodes:
+            hosts:
+  #{datanode_hosts}
+    vars:
+      ansible_user: root
+      ansible_ssh_private_key_file: #{VAGRANT_SSH_PRIVATE_KEY}
+YAML
+
+Vagrant.configure("2") do |config|
+  config.vm.box = VAGRANT_BOX
+  config.vm.box_version = VAGRANT_BOX_VERSION unless VAGRANT_BOX_VERSION.nil?
+  config.ssh.insert_key = false
+
+  VM_SPECS.each do |spec|
+    config.vm.define spec[:name] do |machine|
+      machine.vm.hostname = spec[:name]
+      machine.vm.network "private_network", ip: spec[:ip]
+      machine.vm.synced_folder "..", "/vagrant"
+
+      machine.vm.provider "virtualbox" do |virtualbox|
+        virtualbox.name = "#{VM_NAME_PREFIX}-#{spec[:name]}"
+        virtualbox.memory = spec.fetch(:memory, VM_MEMORY_MB)
+        virtualbox.cpus = spec.fetch(:cpus, VM_CPUS)
+        virtualbox.gui = false
+      end
+
+      # Allow the existing Ansible inventory to connect as root.
+      machine.vm.provision "shell", privileged: true, inline: <<-SHELL
+        set -eu
+        install -d -m 700 /root/.ssh
+        touch /root/.ssh/authorized_keys
+        cat /home/vagrant/.ssh/authorized_keys >> /root/.ssh/authorized_keys
+        sort -u /root/.ssh/authorized_keys -o /root/.ssh/authorized_keys
+        chmod 600 /root/.ssh/authorized_keys
+        if grep -q '^#\?PermitRootLogin' /etc/ssh/sshd_config; then
+          sed -ri 's/^#?PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config
+        else
+          echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config
+        fi
+        systemctl restart ssh || systemctl restart sshd
+      SHELL
+    end
+  end
+end

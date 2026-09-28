@@ -30,7 +30,6 @@
   loop:
     - "{{ dfs_namenode_name_dir }}"
     - "{{ dfs_datanode_data_dir }}"
-    - "{{ dfs_journalnode_edits_dir }}"
 
 - name: Generate hadoop-env.sh
   template:
@@ -57,10 +56,8 @@
     src: "{{ item.src }}"
     dest: "/etc/systemd/system/{{ item.dest }}"
   loop:
-    - { src: 'hadoop-journalnode.service.j2', dest: 'hadoop-journalnode.service' }
     - { src: 'hadoop-namenode.service.j2', dest: 'hadoop-namenode.service' }
     - { src: 'hadoop-datanode.service.j2', dest: 'hadoop-datanode.service' }
-    - { src: 'hadoop-zkfc.service.j2', dest: 'hadoop-zkfc.service' }
     - { src: 'hadoop-resourcemanager.service.j2', dest: 'hadoop-resourcemanager.service' }
     - { src: 'hadoop-nodemanager.service.j2', dest: 'hadoop-nodemanager.service' }
 

@@ -1,0 +1,48 @@
+---
+- name: Validate base environment
+  hosts: hadoop_cluster
+  roles:
+    - common
+
+- name: Install standalone Hadoop and generate configuration
+  hosts: hadoop_cluster
+  roles:
+    - hadoop
+
+- name: Initialize the standalone NameNode
+  hosts: namenodes
+  tasks:
+    - import_tasks: ../roles/hadoop/tasks/initialize.yml
+  vars:
+    format_nn: true
+
+- name: Start standalone Hadoop services
+  hosts: hadoop_cluster
+  tasks:
+    - name: Start NameNode
+      systemd:
+        name: hadoop-namenode
+        state: started
+        enabled: yes
+      when: inventory_hostname in groups['namenodes']
+
+    - name: Start DataNode
+      systemd:
+        name: hadoop-datanode
+        state: started
+        enabled: yes
+      when: inventory_hostname in groups['datanodes']
+
+    - name: Start ResourceManager
+      systemd:
+        name: hadoop-resourcemanager
+        state: started
+        enabled: yes
+      when: inventory_hostname in groups['namenodes']
+
+    - name: Start NodeManager
+      systemd:
+        name: hadoop-nodemanager
+        state: started
+        enabled: yes
+      when: inventory_hostname in groups['datanodes']
