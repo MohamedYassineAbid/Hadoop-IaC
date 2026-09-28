@@ -19,18 +19,18 @@
     - name: Create the HDFS directory
       command: "sudo -u {{ test_user }} /opt/hadoop/bin/hdfs dfs -mkdir -p /test/input"
       environment:
-        PATH: "/opt/hadoop/bin:{{ ansible_env.PATH }}"
+        PATH: "/opt/hadoop/bin:{{ ansible_facts.env.PATH }}"
 
     - name: Upload the file
-      command: "sudo -u {{ test_user }} /opt/hadoop/bin/hdfs dfs -put /tmp/ha_test/test.txt /test/input/"
+      command: "sudo -u {{ test_user }} /opt/hadoop/bin/hdfs dfs -put -f /tmp/ha_test/test.txt /test/input/"
       environment:
-        PATH: "/opt/hadoop/bin:{{ ansible_env.PATH }}"
+        PATH: "/opt/hadoop/bin:{{ ansible_facts.env.PATH }}"
 
     - name: Verify that the file is accessible
       command: "sudo -u {{ test_user }} /opt/hadoop/bin/hdfs dfs -cat /test/input/test.txt"
       register: file_content
       environment:
-        PATH: "/opt/hadoop/bin:{{ ansible_env.PATH }}"
+        PATH: "/opt/hadoop/bin:{{ ansible_facts.env.PATH }}"
 
     - name: Display the test result
       debug:

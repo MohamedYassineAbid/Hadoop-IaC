@@ -2,7 +2,15 @@
 - name: Configure /etc/hosts
   lineinfile:
     path: /etc/hosts
+    regexp: '^\s*127\.0\.2\.1\s+.*\b{{ item.key }}\b'
+    state: absent
+  loop: "{{ hadoop_host_addresses | dict2items }}"
+
+- name: Configure /etc/hosts
+  lineinfile:
+    path: /etc/hosts
     line: "{{ item.value }} {{ item.key }}"
+    regexp: '^\s*[0-9a-fA-F:.]+\s+{{ item.key }}(\s|$)'
     state: present
   loop: "{{ hadoop_host_addresses | dict2items }}"
 

@@ -22,27 +22,27 @@
     - name: Start NameNode
       systemd:
         name: hadoop-namenode
-        state: started
+        state: restarted
         enabled: yes
       when: inventory_hostname in groups['namenodes']
 
     - name: Start DataNode
       systemd:
         name: hadoop-datanode
-        state: started
+        state: restarted
         enabled: yes
       when: inventory_hostname in groups['datanodes']
 
     - name: Start ResourceManager
       systemd:
         name: hadoop-resourcemanager
-        state: started
+        state: restarted
         enabled: yes
       when: inventory_hostname in groups['namenodes']
 
     - name: Start NodeManager
       systemd:
         name: hadoop-nodemanager
-        state: started
+        state: restarted
         enabled: yes
       when: inventory_hostname in groups['datanodes']
