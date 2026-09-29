@@ -39,6 +39,19 @@ roles/hive/files/apache-hive-3.1.3-bin.tar.gz
 
 The archive names must match `hadoop_version` and `hive_version` in `inventory/group_vars/all.yml`.
 
+## For MAC/Linux Users
+
+The latest version of Virtualbox for Mac/Linux can cause issues.
+
+Create/edit the /etc/vbox/networks.conf file and add the following to avoid any network-related issues.
+<pre>* 0.0.0.0/0 ::/0</pre>
+
+or run below commands
+
+```shell
+sudo mkdir -p /etc/vbox/
+echo "* 0.0.0.0/0 ::/0" | sudo tee -a /etc/vbox/networks.conf
+```
 ## First Deployment
 
 Run Vagrant commands from `VMs/` and Ansible commands from the repository root:
